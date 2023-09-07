@@ -1,15 +1,12 @@
-// Wir laden nützliche Werkzeuge, die uns beim Programmieren der App helfen.
-// Importieren bedeutet, dass wir Code von anderen Orten "mitbringen", damit wir ihn hier nutzen können.
+// Importiert hyperscript-helpers, diff, patch und virtual-dom/create-element. 
 import hh from "hyperscript-helpers";
 import { h, diff, patch } from "virtual-dom";
 import createElement from "virtual-dom/create-element";
 
-// Das vereinfacht das Erstellen von HTML-Elementen wie 'div' oder 'button'.
-// 'div', 'button', usw. sind jetzt einfache Funktionen, die wir später aufrufen können.
+// Definiert die genutzten html Elemente.
 const { div, button, input, p, br } = hh(h);
 
-// Das sind die verschiedenen Aktionen, die in der App auftreten können.
-// Sie sind wie Nachrichten, die sagen, was in der App passieren soll.
+// Definiert die Aktionen die der Benutzer machen kann.
 const MESSAGES = {
   QUESTION_CHANGE: "QUESTION_CHANGE",
   ANSWER_CHANGE: "ANSWER_CHANGE",
@@ -20,10 +17,7 @@ const MESSAGES = {
   RATE_CARD: "RATE_CARD"
 };
 
-// Die Funktion baut die Darstellung unserer App. 
-// Sie legt fest, was der Nutzer sieht.
-// 'dispatch' ist eine Funktion, die Aktionen an andere Teile der App sendet.
-// 'model' enthält die aktuellen Daten der App, wie z.B. den Text einer Eingabe.
+// Erstellt die Ansicht des Benutzer und sagt welche Aktion nach einer Eingabe ausgeführt werden soll.
 function createView(dispatch, model) {
   return div({}, [
     div([
@@ -78,23 +72,20 @@ function createView(dispatch, model) {
         }, card.showAnswer ? "Antwort verbergen" : "Antwort anzeigen"),
         card.showAnswer ? p({}, card.answer) : null,
         card.showAnswer ? br({}) : null,
-        div({}, [
+        card.showAnswer ? div({}, [
           "Bewertung: ",
           button({ onclick: () => dispatch({ type: MESSAGES.RATE_CARD, index, rating: 0 }) }, "🟥"),
           " ",
           button({ onclick: () => dispatch({ type: MESSAGES.RATE_CARD, index, rating: 1 }) }, "🟨"),
           " ",
           button({ onclick: () => dispatch({ type: MESSAGES.RATE_CARD, index, rating: 2 }) }, "🟩")
-        ])
-      ])
-    )
+        ]) : null  
+      ])           
+    )       
   ]);
 }
 
-// Diese Funktion aktualisiert die Daten der App, 
-// basierend auf den Aktionen des Nutzers.
-// 'message' ist die Nachricht, die sagt, welche Aktion passiert ist.
-// 'model' enthält die aktuellen Daten der App.
+// Diese Funktion aktualisiert die Daten der App, basierend auf den Aktionen des Nutzers.
 function updateModel(message, model) {
   switch (message.type) {
     case MESSAGES.QUESTION_CHANGE:
@@ -131,48 +122,32 @@ function updateModel(message, model) {
   }
 }
 
-// Diese Funktion startet die App und verwaltet ihre Aktualisierungen.
-// 'initModel' sind die Anfangsdaten, 'updateModel' und 'createView' sind Funktionen, 
-// die die App aktualisieren und darstellen.
-// 'rootElement' ist der Ort im HTML-Dokument, an dem die App angezeigt wird.
+// Diese Funktion startet die App
 function runApp(initModel, updateModel, createView, rootElement) {
   let model = initModel;
   let currentView = createView(dispatch, model);
   let rootNode = createElement(currentView);
   rootElement.appendChild(rootNode);
 
-  // Die dispatch-Funktion wird aufgerufen, wenn der Benutzer eine Aktion ausführt, wie z.B. einen Button klicken.
+// Aktualisiert die Daten nach einer Aktion des Benutzers
   function dispatch(message) {
-    // 1. Die Daten der App werden aktualisiert. Das "message"-Objekt sagt uns, welche Aktion der Benutzer gemacht hat.
     model = updateModel(message, model);
-
-    // 2. Danach wird die Webseite neu erstellt, um die neuen Daten anzuzeigen.
     const updatedView = createView(dispatch, model);
-
-    // 3. Wir prüfen, welche Teile der alten und der neuen Webseite unterschiedlich sind.
     const patches = diff(currentView, updatedView);
-
-    // 4. Nur die unterschiedlichen Teile der Webseite werden aktualisiert. So wird die Webseite schneller geladen.
     rootNode = patch(rootNode, patches);
-
-    // 5. Wir speichern die neue Version der Webseite, um sie später wieder verwenden zu können.
     currentView = updatedView;
   }
 }
 
-
-// Das ist unser Startpunkt. Zu Beginn ist alles leer.
-// Es enthält leere Felder für Fragen und Antworten, und eine leere Liste für Karten.
+// Werte beim Start der Anwendung
 const initModel = {
   question: "",
   answer: "",
   cards: [],
 };
 
-// Das ist der Ort im HTML-Dokument, an dem unsere App erscheinen soll.
-// 'document.getElementById("app")' sucht nach einem Element mit der ID "app" im HTML-Dokument.
+// Der Stammknoten der Anwendung (das div mit id="app" in index.html)
 const rootElement = document.getElementById("app");
 
-// Und los geht's, die App wird gestartet.
-// Wir rufen die Funktion 'runApp' auf und geben ihr alles, was sie zum Starten der App braucht.
+// Startet die Anwendung
 runApp(initModel, updateModel, createView, rootElement);
