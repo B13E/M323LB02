@@ -85,6 +85,11 @@ function createView(dispatch, model) {
   ]);
 }
 
+// Funktion, um die Karten basierend auf ihrer Bewertung zu sortieren.
+function sortCardsByRating(cards) {
+  return cards.slice().sort((a, b) => a.rating - b.rating);
+}
+
 // Diese Funktion aktualisiert die Daten der App, basierend auf den Aktionen des Nutzers.
 function updateModel(message, model) {
   switch (message.type) {
@@ -93,9 +98,13 @@ function updateModel(message, model) {
     case MESSAGES.ANSWER_CHANGE:
       return { ...model, answer: message.value };
     case MESSAGES.ADD_CARD:
+      const newCards = [
+        ...model.cards,
+        { question: model.question, answer: model.answer, showAnswer: false, rating: 0 }
+      ];
       return { 
         ...model, 
-        cards: [...model.cards, { question: model.question, answer: model.answer, showAnswer: false, rating: 0 }],
+        cards: sortCardsByRating(newCards),
         question: "",
         answer: ""
       };
@@ -104,19 +113,21 @@ function updateModel(message, model) {
       updatedCards[message.index].showAnswer = !updatedCards[message.index].showAnswer;
       return { ...model, cards: updatedCards };
     case MESSAGES.DELETE_CARD:
-      return { ...model, cards: model.cards.filter((_, index) => index !== message.index) };
+      const remainingCards = model.cards.filter((_, index) => index !== message.index);
+      return { ...model, cards: sortCardsByRating(remainingCards) };
     case MESSAGES.EDIT_CARD:
       const cardToEdit = model.cards[message.index];
+      const cardsWithoutEdited = model.cards.filter((_, index) => index !== message.index);
       return {
         ...model,
         question: cardToEdit.question,
         answer: cardToEdit.answer,
-        cards: model.cards.filter((_, index) => index !== message.index)
+        cards: sortCardsByRating(cardsWithoutEdited)
       };
     case MESSAGES.RATE_CARD:
       const ratedCards = [...model.cards];
       ratedCards[message.index].rating += message.rating;
-      return { ...model, cards: ratedCards };
+      return { ...model, cards: sortCardsByRating(ratedCards) };
     default:
       return model;
   }
